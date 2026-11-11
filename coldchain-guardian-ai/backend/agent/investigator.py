@@ -207,7 +207,11 @@ class ColdChainInvestigator:
         shipments_to_analyze: list[str] = list(dict.fromkeys(sid_matches))
 
         # If no specific shipment, check for fleet-level keywords
-        fleet_keywords = {"fleet", "all shipments", "overview", "summary", "worst", "problem"}
+        fleet_keywords = {
+            "fleet", "all shipments", "overview", "summary", "worst", "problem",
+            "overdue", "maintenance", "all trucks", "compliance", "non-compliant",
+            "regulatory", "financial", "total loss", "highest risk",
+        }
         is_fleet_query = any(kw in query.lower() for kw in fleet_keywords)
 
         if not shipments_to_analyze and not is_fleet_query:
@@ -275,6 +279,7 @@ class ColdChainInvestigator:
         fleet_summary: dict = {}
         if is_fleet_query or not shipments_to_analyze:
             fleet_summary = tool_get_fleet_summary(data)
+            overdue_trucks = fleet_summary.get("trucks_maintenance_overdue", [])
             findings.append(Finding(
                 title    = "Fleet overview",
                 detail   = (
@@ -283,12 +288,18 @@ class ColdChainInvestigator:
                     f"{fleet_summary['total_incidents']} incidents; "
                     f"${fleet_summary['total_financial_loss_usd']:,} total loss."
                 ),
-                severity = "medium" if fleet_summary.get("shipments_with_excursion", 0) > 5 else "low",
+                severity = "medium" if fleet_summary.get("shipments_with_excursion", 0) > 0 else "low",
                 evidence = [
                     f"Trucks overdue for maintenance: "
-                    f"{', '.join(fleet_summary.get('trucks_maintenance_overdue', [])) or 'none'}"
+                    f"{', '.join(overdue_trucks) or 'none'}"
                 ],
             ))
+            # Derive fleet-level risk from excursion rate + incident count
+            n_exc    = fleet_summary.get("shipments_with_excursion", 0)
+            n_shp    = max(1, fleet_summary.get("total_shipments", 1))
+            n_inc    = fleet_summary.get("total_incidents", 0)
+            fleet_risk = min(10.0, n_exc / n_shp * 10 + n_inc * 0.3)
+            max_risk   = max(max_risk, fleet_risk)
 
         # Risk level
         if max_risk >= 8:
@@ -298,7 +309,7 @@ class ColdChainInvestigator:
         elif max_risk >= 4:
             risk_level = "MEDIUM"
         else:
-            risk_level = "LOW" if max_risk > 0 or fleet_summary else "LOW"
+            risk_level = "LOW"
 
         # Summary sentence
         if shipments_to_analyze:
@@ -321,14 +332,14 @@ class ColdChainInvestigator:
             "Quarantine affected shipment(s) pending product disposition decision.",
             "Notify QA and regulatory affairs teams immediately for critical findings.",
             "Schedule full refrigeration audit for trucks involved in excursion events.",
-            "Review SOP-003 §4 temperature monitoring procedures with driver team.",
+            "Review SOP-001 §6 temperature monitoring procedures with driver team.",
             "Update corrective action log and document root cause analysis within 24 h.",
         ]
 
         citations = [
-            "SOP-003 §4.1 — Temperature Monitoring During Transit",
-            "SOP-003 §5.2 — Excursion Documentation and Reporting",
-            "SOP-004 §3.1 — Incident Root Cause Analysis Protocol",
+            "SOP-001 §6.2 — During Transit Temperature Monitoring",
+            "SOP-002 §3.1 — Notification Chain (Cold-Chain Breach Response)",
+            "SOP-004 §3.1 — Initial Incident Report (Any Employee)",
         ]
 
         return InvestigationReport(
