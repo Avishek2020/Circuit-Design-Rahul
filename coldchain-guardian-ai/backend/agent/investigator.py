@@ -37,17 +37,18 @@ cold-chain logistics. Your role is to analyse temperature excursion data, identi
 root causes, assess regulatory risk, and recommend corrective actions.
 
 Investigation protocol:
-1. Retrieve shipment-level temporal analysis for any shipment IDs mentioned.
-2. If the query is fleet-wide, call get_fleet_summary and list_problem_shipments first.
-3. Search SOP documents to find the applicable compliance standard for the product category.
-4. Identify correlations: door events before excursions, maintenance failures, night stops.
-5. Assess whether the incident meets FDA 21 CFR Part 1 / FSMA regulatory reporting threshold.
-6. Submit your final report using submit_investigation_report with structured findings.
+1. For fleet-wide queries: call get_fleet_summary once, then list_problem_shipments,
+   then get_shipment_analysis for the TOP 3 worst shipments only (not all of them).
+2. For specific shipment queries: call get_shipment_analysis for each mentioned ID.
+3. Call search_sop_documents once for the applicable compliance standard.
+4. Assess whether the incident meets FDA 21 CFR Part 1 / FSMA regulatory reporting threshold.
+5. ALWAYS finish by calling submit_investigation_report with your structured findings.
 
 Rules:
-- Always call submit_investigation_report to end the investigation (never stop with plain text).
+- You MUST call submit_investigation_report — never end with plain text.
+- Analyse at most 3–5 shipments per investigation to stay within tool-call limits.
 - Cite specific timestamps, temperatures, and SOP sections as evidence.
-- Risk level must match the worst individual finding severity (escalate to CRITICAL if any finding is critical).
+- Risk level = worst individual finding severity (CRITICAL if any finding is critical).
 - regulatory_reportable = true if: pharma product, financial_loss > $10,000, or critical excursion.
 """
 
@@ -64,7 +65,7 @@ class ColdChainInvestigator:
     retriever   : Optional HybridRetriever for SOP semantic search.
     """
 
-    MAX_ITERATIONS = 10   # safety guard on agentic loop
+    MAX_ITERATIONS = 25   # safety guard on agentic loop
 
     def __init__(
         self,
@@ -119,11 +120,29 @@ class ColdChainInvestigator:
             messages.append({"role": "assistant", "content": response.content})
 
             if response.stop_reason == "end_turn":
-                # Agent didn't call submit_report — build a minimal report from text
-                text = " ".join(
-                    b.text for b in response.content if hasattr(b, "text")
+                # Claude finished without calling submit_investigation_report.
+                # Force one final turn with tool_choice to get a structured report.
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        "Please now call submit_investigation_report with your "
+                        "structured findings based on the evidence gathered above."
+                    ),
+                })
+                forced = self._client.messages.create(   # type: ignore[union-attr]
+                    model       = "claude-sonnet-4-6",
+                    max_tokens  = 4096,
+                    system      = SYSTEM_PROMPT,
+                    tools       = TOOL_SCHEMAS,
+                    tool_choice = {"type": "tool", "name": "submit_investigation_report"},
+                    messages    = messages,
                 )
-                return self._text_fallback_report(query, text, shipments_seen)
+                for block in forced.content:
+                    if getattr(block, "type", None) == "tool_use" \
+                            and block.name == "submit_investigation_report":
+                        report_input = block.input
+                        break
+                break   # exit loop regardless
 
             if response.stop_reason != "tool_use":
                 break
