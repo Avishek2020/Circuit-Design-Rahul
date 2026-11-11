@@ -1,0 +1,433 @@
+[
+  {
+    "warehouse_id": "WH-01",
+    "name": "FrostGuard Central Hub",
+    "location": "Chicago, IL",
+    "latitude": 41.8781,
+    "longitude": -87.6298,
+    "capacity_pallets": 300,
+    "current_occupancy_pallets": 96,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "FDA Registered",
+      "ISO 22000",
+      "HACCP",
+      "BRC Grade A"
+    ],
+    "contact_manager": "Dr. Patricia Wells",
+    "phone": "+1-892-555-9935",
+    "operational_since": "2015-12-04"
+  },
+  {
+    "warehouse_id": "WH-02",
+    "name": "PolarPath Los Angeles",
+    "location": "Los Angeles, CA",
+    "latitude": 34.0522,
+    "longitude": -118.2437,
+    "capacity_pallets": 300,
+    "current_occupancy_pallets": 241,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "HACCP",
+      "BRC Grade A",
+      "SQF Level 2"
+    ],
+    "contact_manager": "Robert Huang",
+    "phone": "+1-717-555-1434",
+    "operational_since": "2016-04-08"
+  },
+  {
+    "warehouse_id": "WH-03",
+    "name": "ArcticFlow Dallas",
+    "location": "Dallas, TX",
+    "latitude": 32.7767,
+    "longitude": -96.797,
+    "capacity_pallets": 800,
+    "current_occupancy_pallets": 341,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "BRC Grade A",
+      "SQF Level 2",
+      "HACCP",
+      "ISO 22000"
+    ],
+    "contact_manager": "Lisa Monroe",
+    "phone": "+1-206-555-3615",
+    "operational_since": "2017-10-09"
+  },
+  {
+    "warehouse_id": "WH-04",
+    "name": "ChillChain New York",
+    "location": "New York, NY",
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "capacity_pallets": 600,
+    "current_occupancy_pallets": 354,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "ISO 22000",
+      "BRC Grade A",
+      "SQF Level 2"
+    ],
+    "contact_manager": "Ahmed Khalil",
+    "phone": "+1-589-555-2584",
+    "operational_since": "2018-02-03"
+  },
+  {
+    "warehouse_id": "WH-05",
+    "name": "IceLane Atlanta",
+    "location": "Atlanta, GA",
+    "latitude": 33.749,
+    "longitude": -84.388,
+    "capacity_pallets": 500,
+    "current_occupancy_pallets": 326,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "FDA Registered",
+      "HACCP",
+      "BRC Grade A",
+      "ISO 22000"
+    ],
+    "contact_manager": "Jennifer Park",
+    "phone": "+1-587-555-2291",
+    "operational_since": "2019-09-04"
+  },
+  {
+    "warehouse_id": "WH-06",
+    "name": "FrostEdge Seattle",
+    "location": "Seattle, WA",
+    "latitude": 47.6062,
+    "longitude": -122.3321,
+    "capacity_pallets": 800,
+    "current_occupancy_pallets": 390,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "BRC Grade A",
+      "FDA Registered",
+      "SQF Level 2",
+      "HACCP"
+    ],
+    "contact_manager": "Thomas Eriksson",
+    "phone": "+1-246-555-4733",
+    "operational_since": "2020-12-03"
+  },
+  {
+    "warehouse_id": "WH-07",
+    "name": "ColdVault Denver",
+    "location": "Denver, CO",
+    "latitude": 39.7392,
+    "longitude": -104.9903,
+    "capacity_pallets": 500,
+    "current_occupancy_pallets": 190,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "HACCP",
+      "SQF Level 2"
+    ],
+    "contact_manager": "Amara Diallo",
+    "phone": "+1-850-555-6977",
+    "operational_since": "2021-05-15"
+  },
+  {
+    "warehouse_id": "WH-08",
+    "name": "GlacierPoint Miami",
+    "location": "Miami, FL",
+    "latitude": 25.7617,
+    "longitude": -80.1918,
+    "capacity_pallets": 400,
+    "current_occupancy_pallets": 214,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "ISO 22000",
+      "FDA Registered",
+      "SQF Level 2"
+    ],
+    "contact_manager": "Chris Nguyen",
+    "phone": "+1-273-555-3803",
+    "operational_since": "2015-11-21"
+  },
+  {
+    "warehouse_id": "WH-09",
+    "name": "TundraTrans Phoenix",
+    "location": "Phoenix, AZ",
+    "latitude": 33.4484,
+    "longitude": -112.074,
+    "capacity_pallets": 800,
+    "current_occupancy_pallets": 613,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "ISO 22000",
+      "SQF Level 2"
+    ],
+    "contact_manager": "Sophie Bouchard",
+    "phone": "+1-855-555-4598",
+    "operational_since": "2016-07-09"
+  },
+  {
+    "warehouse_id": "WH-10",
+    "name": "FreezeLink Boston",
+    "location": "Boston, MA",
+    "latitude": 42.3601,
+    "longitude": -71.0589,
+    "capacity_pallets": 500,
+    "current_occupancy_pallets": 178,
+    "temperature_zones": [
+      {
+        "zone": "A",
+        "type": "frozen",
+        "temp_range": [
+          -25,
+          -15
+        ]
+      },
+      {
+        "zone": "B",
+        "type": "chilled",
+        "temp_range": [
+          0,
+          4
+        ]
+      },
+      {
+        "zone": "C",
+        "type": "ambient",
+        "temp_range": [
+          15,
+          25
+        ]
+      }
+    ],
+    "certifications": [
+      "HACCP",
+      "FDA Registered"
+    ],
+    "contact_manager": "Victor Santos",
+    "phone": "+1-267-555-4456",
+    "operational_since": "2017-07-09"
+  }
+]

@@ -1,0 +1,801 @@
+[
+  {
+    "report_id": "MNT-001",
+    "truck_id": "TRK-001",
+    "date": "2024-03-16",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Kevin O'Sullivan",
+    "cost_usd": 2325,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "refrigerant_charge",
+      "filter"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-002",
+    "truck_id": "TRK-001",
+    "date": "2024-06-01",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 3000,
+    "issues_found": [
+      "compressor_noise"
+    ],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-003",
+    "truck_id": "TRK-002",
+    "date": "2024-01-01",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Frank Mueller",
+    "cost_usd": 1254,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "door_seal"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-004",
+    "truck_id": "TRK-002",
+    "date": "2024-04-22",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Rashida Johnson",
+    "cost_usd": 2984,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "brake_pads",
+      "air_filter"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-005",
+    "truck_id": "TRK-003",
+    "date": "2024-03-22",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 1629,
+    "issues_found": [
+      "minor_refrigerant_leak"
+    ],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-006",
+    "truck_id": "TRK-003",
+    "date": "2024-05-07",
+    "type": "breakdown",
+    "description": "Breakdown service: refrigeration unit check, door seal inspection",
+    "technician": "Rashida Johnson",
+    "cost_usd": 2848,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-007",
+    "truck_id": "TRK-004",
+    "date": "2024-02-07",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Mike Torres",
+    "cost_usd": 3492,
+    "issues_found": [],
+    "parts_replaced": [
+      "refrigerant_charge",
+      "filter"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-008",
+    "truck_id": "TRK-004",
+    "date": "2024-05-23",
+    "type": "unscheduled",
+    "description": "Unscheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Mike Torres",
+    "cost_usd": 1121,
+    "issues_found": [
+      "minor_refrigerant_leak"
+    ],
+    "parts_replaced": [
+      "refrigerant_charge",
+      "filter"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-009",
+    "truck_id": "TRK-004",
+    "date": "2024-08-08",
+    "type": "breakdown",
+    "description": "Breakdown service: refrigeration unit check, door seal inspection",
+    "technician": "Yemi Adeyemi",
+    "cost_usd": 2030,
+    "issues_found": [],
+    "parts_replaced": [
+      "compressor_belt"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-010",
+    "truck_id": "TRK-005",
+    "date": "2024-03-02",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 518,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "condenser_coil",
+      "refrigerant_charge"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-011",
+    "truck_id": "TRK-005",
+    "date": "2024-05-04",
+    "type": "breakdown",
+    "description": "Breakdown service: refrigeration unit check, door seal inspection",
+    "technician": "Mike Torres",
+    "cost_usd": 2703,
+    "issues_found": [],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-012",
+    "truck_id": "TRK-006",
+    "date": "2024-03-27",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Rashida Johnson",
+    "cost_usd": 2141,
+    "issues_found": [
+      "minor_refrigerant_leak"
+    ],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-013",
+    "truck_id": "TRK-006",
+    "date": "2024-05-03",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Kevin O'Sullivan",
+    "cost_usd": 3006,
+    "issues_found": [
+      "minor_refrigerant_leak"
+    ],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-014",
+    "truck_id": "TRK-006",
+    "date": "2024-08-07",
+    "type": "unscheduled",
+    "description": "Unscheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 2595,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "refrigerant_charge",
+      "filter"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-015",
+    "truck_id": "TRK-007",
+    "date": "2024-03-19",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection – failed due to unresolved compressor issue",
+    "technician": "Frank Mueller",
+    "cost_usd": 481,
+    "issues_found": [
+      "thermostat_drift",
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "compressor_belt"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": false
+  },
+  {
+    "report_id": "MNT-016",
+    "truck_id": "TRK-007",
+    "date": "2024-04-02",
+    "type": "unscheduled",
+    "description": "Unscheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Kevin O'Sullivan",
+    "cost_usd": 1844,
+    "issues_found": [],
+    "parts_replaced": [
+      "brake_pads",
+      "air_filter"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-017",
+    "truck_id": "TRK-008",
+    "date": "2024-03-24",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 1883,
+    "issues_found": [],
+    "parts_replaced": [
+      "condenser_coil",
+      "refrigerant_charge"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-018",
+    "truck_id": "TRK-008",
+    "date": "2024-04-25",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 1588,
+    "issues_found": [
+      "thermostat_drift",
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-019",
+    "truck_id": "TRK-009",
+    "date": "2024-02-12",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 455,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "refrigerant_charge",
+      "filter"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-020",
+    "truck_id": "TRK-009",
+    "date": "2024-04-02",
+    "type": "breakdown",
+    "description": "Breakdown service: refrigeration unit check, door seal inspection",
+    "technician": "Rashida Johnson",
+    "cost_usd": 2386,
+    "issues_found": [],
+    "parts_replaced": [
+      "condenser_coil",
+      "refrigerant_charge"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-021",
+    "truck_id": "TRK-009",
+    "date": "2024-07-19",
+    "type": "unscheduled",
+    "description": "Unscheduled service: refrigeration unit check, door seal inspection – failed due to unresolved compressor issue",
+    "technician": "Paul Renault",
+    "cost_usd": 3218,
+    "issues_found": [
+      "minor_refrigerant_leak"
+    ],
+    "parts_replaced": [
+      "door_seal"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": false
+  },
+  {
+    "report_id": "MNT-022",
+    "truck_id": "TRK-010",
+    "date": "2024-02-04",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Rashida Johnson",
+    "cost_usd": 3084,
+    "issues_found": [
+      "compressor_noise"
+    ],
+    "parts_replaced": [
+      "door_seal"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-023",
+    "truck_id": "TRK-010",
+    "date": "2024-04-16",
+    "type": "breakdown",
+    "description": "Breakdown service: refrigeration unit check, door seal inspection – failed due to unresolved compressor issue",
+    "technician": "Frank Mueller",
+    "cost_usd": 3357,
+    "issues_found": [
+      "minor_refrigerant_leak"
+    ],
+    "parts_replaced": [
+      "door_seal"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": false
+  },
+  {
+    "report_id": "MNT-024",
+    "truck_id": "TRK-011",
+    "date": "2024-01-03",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Paul Renault",
+    "cost_usd": 2618,
+    "issues_found": [],
+    "parts_replaced": [
+      "brake_pads",
+      "air_filter"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-025",
+    "truck_id": "TRK-011",
+    "date": "2024-04-19",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 2880,
+    "issues_found": [
+      "compressor_noise"
+    ],
+    "parts_replaced": [
+      "condenser_coil",
+      "refrigerant_charge"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-026",
+    "truck_id": "TRK-011",
+    "date": "2024-08-09",
+    "type": "unscheduled",
+    "description": "Unscheduled service: refrigeration unit check, door seal inspection – failed due to unresolved compressor issue",
+    "technician": "Kevin O'Sullivan",
+    "cost_usd": 2279,
+    "issues_found": [
+      "thermostat_drift",
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "brake_pads",
+      "air_filter"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": false
+  },
+  {
+    "report_id": "MNT-027",
+    "truck_id": "TRK-012",
+    "date": "2024-02-03",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Kevin O'Sullivan",
+    "cost_usd": 2159,
+    "issues_found": [
+      "compressor_noise"
+    ],
+    "parts_replaced": [
+      "condenser_coil",
+      "refrigerant_charge"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-028",
+    "truck_id": "TRK-012",
+    "date": "2024-04-28",
+    "type": "unscheduled",
+    "description": "Unscheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Yemi Adeyemi",
+    "cost_usd": 2584,
+    "issues_found": [
+      "thermostat_drift",
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "compressor_belt"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-029",
+    "truck_id": "TRK-013",
+    "date": "2024-02-18",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Yemi Adeyemi",
+    "cost_usd": 2012,
+    "issues_found": [],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-030",
+    "truck_id": "TRK-013",
+    "date": "2024-06-08",
+    "type": "breakdown",
+    "description": "Breakdown service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 2766,
+    "issues_found": [],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-031",
+    "truck_id": "TRK-014",
+    "date": "2024-01-30",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Mike Torres",
+    "cost_usd": 3032,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "compressor_belt"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-032",
+    "truck_id": "TRK-014",
+    "date": "2024-05-12",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection – failed due to unresolved compressor issue",
+    "technician": "Sandra Lee",
+    "cost_usd": 1250,
+    "issues_found": [
+      "compressor_noise"
+    ],
+    "parts_replaced": [
+      "door_seal"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": false
+  },
+  {
+    "report_id": "MNT-033",
+    "truck_id": "TRK-014",
+    "date": "2024-09-12",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Rashida Johnson",
+    "cost_usd": 2925,
+    "issues_found": [],
+    "parts_replaced": [
+      "refrigerant_charge",
+      "filter"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-034",
+    "truck_id": "TRK-015",
+    "date": "2024-01-08",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Yemi Adeyemi",
+    "cost_usd": 1783,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "compressor_belt"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-035",
+    "truck_id": "TRK-015",
+    "date": "2024-04-04",
+    "type": "unscheduled",
+    "description": "Unscheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Paul Renault",
+    "cost_usd": 422,
+    "issues_found": [
+      "compressor_noise"
+    ],
+    "parts_replaced": [
+      "condenser_coil",
+      "refrigerant_charge"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-036",
+    "truck_id": "TRK-016",
+    "date": "2024-03-12",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Yemi Adeyemi",
+    "cost_usd": 1365,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "condenser_coil",
+      "refrigerant_charge"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-037",
+    "truck_id": "TRK-016",
+    "date": "2024-05-29",
+    "type": "breakdown",
+    "description": "Breakdown service: refrigeration unit check, door seal inspection",
+    "technician": "Yemi Adeyemi",
+    "cost_usd": 3402,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "condenser_coil",
+      "refrigerant_charge"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-038",
+    "truck_id": "TRK-017",
+    "date": "2024-02-24",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Paul Renault",
+    "cost_usd": 455,
+    "issues_found": [
+      "compressor_noise"
+    ],
+    "parts_replaced": [
+      "door_seal"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-039",
+    "truck_id": "TRK-017",
+    "date": "2024-06-05",
+    "type": "breakdown",
+    "description": "Breakdown service: refrigeration unit check, door seal inspection",
+    "technician": "Sandra Lee",
+    "cost_usd": 2192,
+    "issues_found": [],
+    "parts_replaced": [
+      "refrigerant_charge",
+      "filter"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-040",
+    "truck_id": "TRK-018",
+    "date": "2024-02-24",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Frank Mueller",
+    "cost_usd": 2395,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "refrigerant_charge",
+      "filter"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-041",
+    "truck_id": "TRK-018",
+    "date": "2024-06-09",
+    "type": "unscheduled",
+    "description": "Unscheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Rashida Johnson",
+    "cost_usd": 1605,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "door_seal"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-042",
+    "truck_id": "TRK-019",
+    "date": "2024-03-07",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Frank Mueller",
+    "cost_usd": 3063,
+    "issues_found": [
+      "minor_refrigerant_leak"
+    ],
+    "parts_replaced": [
+      "condenser_coil",
+      "refrigerant_charge"
+    ],
+    "next_service_km": 50000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-043",
+    "truck_id": "TRK-019",
+    "date": "2024-04-18",
+    "type": "unscheduled",
+    "description": "Unscheduled service: refrigeration unit check, door seal inspection – failed due to unresolved compressor issue",
+    "technician": "Frank Mueller",
+    "cost_usd": 3326,
+    "issues_found": [
+      "thermostat_drift",
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "brake_pads",
+      "air_filter"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": false
+  },
+  {
+    "report_id": "MNT-044",
+    "truck_id": "TRK-019",
+    "date": "2024-09-03",
+    "type": "breakdown",
+    "description": "Breakdown service: refrigeration unit check, door seal inspection",
+    "technician": "Kevin O'Sullivan",
+    "cost_usd": 3458,
+    "issues_found": [
+      "minor_refrigerant_leak"
+    ],
+    "parts_replaced": [
+      "thermostat",
+      "door_seal"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-045",
+    "truck_id": "TRK-020",
+    "date": "2024-01-22",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Mike Torres",
+    "cost_usd": 1701,
+    "issues_found": [
+      "thermostat_drift",
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "brake_pads",
+      "air_filter"
+    ],
+    "next_service_km": 75000,
+    "passed_inspection": true
+  },
+  {
+    "report_id": "MNT-046",
+    "truck_id": "TRK-020",
+    "date": "2024-04-22",
+    "type": "scheduled",
+    "description": "Scheduled service: refrigeration unit check, door seal inspection",
+    "technician": "Mike Torres",
+    "cost_usd": 1677,
+    "issues_found": [
+      "door_seal_wear"
+    ],
+    "parts_replaced": [
+      "door_seal"
+    ],
+    "next_service_km": 100000,
+    "passed_inspection": true
+  }
+]

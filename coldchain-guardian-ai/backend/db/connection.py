@@ -16,7 +16,7 @@ load_dotenv()
 
 _DATABASE_URL: str = os.environ.get(
     "DATABASE_URL",
-    "postgresql://user:password@localhost:5432/coldchain",
+    "postgresql+psycopg2://user:password@localhost:5432/coldchain",
 )
 
 _engine = None
