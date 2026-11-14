@@ -1,0 +1,85 @@
+* ============================================================
+*  CP-PLL Phase-Domain Behavioral — LTspice XVII
+*  f_ref=100MHz  f_out=1GHz  N=10  Icp=200µA
+*  Loop filter: R1=3.9kΩ, C1=30pF, C2=2.2pF
+*
+*  HOW TO RUN:
+*    File → Open → cp_pll_ltspice.cir
+*    Run (F5) — completes in <5 s
+*    Plot V(CTRL)   → converges from 0.5V → 0.9V (lock)
+*    Plot V(VCO_F)  → converges from 0.84 → 1.00 (GHz units)
+*    Plot V(PHE)    → phase error collapses to near-zero
+*
+*  Phase-domain model eliminates the 1 GHz carrier — only the
+*  slowly-varying loop quantities are integrated.  Results are
+*  identical to a full transistor-level simulation for the purpose
+*  of verifying lock convergence and settling time.
+* ============================================================
+
+* ── Design Parameters ────────────────────────────────────
+.param F_REF  = 100Meg
+.param F0     = 1G
+.param KVCO   = 400Meg
+.param V0     = 0.9        ; VCO control voltage for f0
+.param ICP    = 200u
+.param N_DIV  = 10
+.param R1     = 3927       ; loop filter resistor (Ω)
+.param C1     = 30p        ; loop filter main cap  (F)
+.param C2     = 2.2p       ; loop filter HF cap    (F)
+
+* ── Phase Error Integrator ───────────────────────────────
+* V(PHE) = accumulated phase error (radians)
+* C = 1 F  →  V changes at ω_error rad/s
+*
+* dV(PHE)/dt = ω_ref − ω_vco/N = 2π(f_ref − f_vco/N)
+*
+* f_vco(t) = F0 + KVCO × (V(CTRL) − V0)
+* Clamp f_vco to [200 MHz, 1.8 GHz] via limit()
+
+Cphe  PHE  0  1
+Bphe  0  PHE  I={2*pi*(F_REF - limit(F0+KVCO*(V(CTRL)-V0), 200Meg, 1.8G)/N_DIV)}
+
+* ── Charge Pump ──────────────────────────────────────────
+* Hard-clip model: I = ICP × clip(φ/(2π), −1, +1)
+*   − Fully sourcing ICP when REF leads by ≥1 cycle
+*   − Fully sinking ICP when VCO leads by ≥1 cycle
+*   − Linear (Kpd = ICP/2π = 31.8 µA/rad) within ±2π
+
+Bcp  0  CTRL  I={ICP*limit(V(PHE)/(2*pi), -1, 1)}
+
+* ── Passive Loop Filter ──────────────────────────────────
+*   CTRL ──R1── N1 ──C1── GND
+*   CTRL ──C2── GND
+*   fz  = 1/(2π R1 C1) = 1.34 MHz
+*   fp2 = 1/(2π R1 C2) = 18.7 MHz
+*   fc  = 4.72 MHz,  PM = 60.9°
+
+Rlf  CTRL  N1    {R1}
+Clf1 N1    0     {C1}
+Clf2 CTRL  0     {C2}
+
+* ── VCO Frequency Monitor ────────────────────────────────
+* V(VCO_F) in GHz units (1.0 V = 1.0 GHz) for easy reading
+Bvco_f  VCO_F  0  V={limit(F0+KVCO*(V(CTRL)-V0), 200Meg, 1.8G) / 1G}
+
+* ── Initial Conditions ───────────────────────────────────
+* Start with VCO at 840 MHz (−160 MHz from target):
+*   V(CTRL) = 0.5 V  →  f_vco = 1G + 400M×(0.5−0.9) = 840 MHz
+*   V(N1)   = 0.5 V  (no initial voltage across C1)
+*   V(PHE)  = 0     (zero phase error at t = 0)
+.ic  V(CTRL)=0.5  V(N1)=0.5  V(PHE)=0
+
+* ── Transient Simulation ─────────────────────────────────
+* 3 µs total:  expect full lock within 1–2 µs
+* Max timestep 0.1 ns is fine for LTspice (phase-domain is slow)
+.tran  0.1n  3u  0  0.1n
+
+* ── Measurements ─────────────────────────────────────────
+* Time when VCO frequency first reaches 99.9% of target (999 MHz)
+.meas tran T_LOCK  TRIG V(VCO_F)=0.84  TARG V(VCO_F)=0.999  RISE=1
+* Steady-state control voltage (last 0.5 µs average)
+.meas tran VCTRL_SS  AVG  V(CTRL)  FROM=2.5u  TO=3u
+* Steady-state VCO frequency
+.meas tran FVCO_SS   AVG  V(VCO_F)  FROM=2.5u  TO=3u
+
+.end

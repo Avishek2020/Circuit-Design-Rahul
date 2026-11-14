@@ -1,0 +1,54 @@
+// ===========================================================
+//  VCO — Verilog-A Behavioral Model
+//  NMOS Cross-Coupled LC Oscillator, 1 GHz
+//  For use in Cadence Virtuoso / Spectre
+// ===========================================================
+`include "disciplines.vams"
+`include "constants.vams"
+
+module vco (ctrl, outp, outn, vdd, vss);
+
+  input    ctrl, vdd, vss;
+  output   outp, outn;
+  electrical ctrl, outp, outn, vdd, vss;
+
+  // Design parameters
+  parameter real f0        = 1.0e9;    // Hz  nominal frequency
+  parameter real kvco      = 400.0e6;  // Hz/V VCO gain
+  parameter real vctrl_nom = 0.9;      // V  nominal control voltage
+  parameter real vamp      = 0.9;      // V  output swing (single-ended)
+  parameter real tau_rise  = 50.0e-12; // s  edge transition time
+  parameter real PN_1MHz   = -120.0;   // dBc/Hz phase noise at 1MHz (Leeson)
+
+  // Internal variables
+  real   freq_inst;   // instantaneous frequency (Hz)
+  real   phase;       // accumulated phase (rad)
+  real   v_ctrl;
+
+  analog begin
+
+    // Sample control voltage
+    v_ctrl   = V(ctrl, vss);
+
+    // Frequency deviation from nominal
+    freq_inst = f0 + kvco * (v_ctrl - vctrl_nom);
+
+    // Clamp frequency to valid range (200 MHz to 1.6 GHz)
+    if (freq_inst < 200.0e6) freq_inst = 200.0e6;
+    if (freq_inst > 1.6e9)   freq_inst = 1.6e9;
+
+    // Phase accumulation:  dφ/dt = 2π·f(V)
+    // Verilog-A: use idt operator
+    phase = `M_TWO_PI * idtmod(freq_inst, 0.0, 1.0, 0.0);
+
+    // Differential sinusoidal output (clean, no harmonics)
+    // Transition shaped by tanh for smooth edge without hard clipping
+    V(outp, vss) <+ vamp * tanh(sin(phase)        / (tau_rise * freq_inst * `M_TWO_PI));
+    V(outn, vss) <+ vamp * tanh(sin(phase + `M_PI) / (tau_rise * freq_inst * `M_TWO_PI));
+
+    // Supply current (constant, Leeson noise not modelled here)
+    I(vdd, vss) <+ 5.0e-3;  // 5 mA tail current
+
+  end
+
+endmodule

@@ -1,0 +1,367 @@
+* ============================================================
+*  CP-PLL — TRANSISTOR-LEVEL NETLISTS (TSMC 180nm CMOS)
+*  Each block is a .SUBCKT; instantiate from top-level
+* ============================================================
+
+* ─── Model Include ──────────────────────────────────────
+* .LIB "tsmc18rf.lib" TT    ; uncomment with actual PDK
+* Placeholder BSIM3v3 simplified models below:
+
+.MODEL NMOS18 NMOS (LEVEL=8
++ VTH0=0.50  K1=0.56  K2=0.01  UA=2.5E-10  UB=5.87E-19
++ TOX=4.1E-9  XJ=1.5E-7  NCH=2.3E17  U0=400
++ VSAT=1.0E5  A0=1.0  AGS=0.0  B0=0  B1=0
++ KETA=-0.047  LINT=4.0E-8  WINT=0  VBM=-5
++ CGSO=1.65E-10  CGDO=1.65E-10  CGBO=5E-10
++ CJ=9.5E-4  MJ=0.38  CJSW=2.5E-10  MJSW=0.3
++ JS=1.0E-4  PB=0.8)
+
+.MODEL PMOS18 PMOS (LEVEL=8
++ VTH0=-0.50  K1=0.53  K2=0.01  UA=5.0E-10  UB=1.5E-18
++ TOX=4.1E-9  XJ=1.5E-7  NCH=4.5E17  U0=100
++ VSAT=8.0E4  A0=1.0  AGS=0.0  B0=0  B1=0
++ KETA=-0.047  LINT=4.0E-8  WINT=0  VBM=-5
++ CGSO=1.65E-10  CGDO=1.65E-10  CGBO=5E-10
++ CJ=1.3E-3  MJ=0.46  CJSW=2.5E-10  MJSW=0.33
++ JS=1.0E-4  PB=0.9)
+
+* ─── Sizing Guidelines (W/L in µm/µm) ──────────────────
+* All L = 0.18µm minimum; for analog use L = 0.36 or 0.5µm
+* Vdsat ≈ 150-200 mV for analog devices (gm/Id ≈ 10-15 V⁻¹)
+
+* ============================================================
+* SUB 1: VCO — NMOS Cross-Coupled Differential LC Oscillator
+*
+*         VDD
+*          |
+*    L/2──┤├──L/2    (center-tapped inductor, L=2nH each half)
+*         |   |
+*    ─────┤   ├─────
+*    |  VOP   VON  |
+*    |    |   |    |
+*    └─G2─┤M2 M1├─G1─┘  (cross-coupled NMOS pair)
+*         |   |
+*    Vcap1─┤C1 C2├─Vcap2  (differential varactors)
+*         |   |
+*         └───┘
+*          |
+*    M3 (tail current source, Itail = 5mA)
+*          |
+*         GND
+*
+* ============================================================
+.SUBCKT VCO_LC  CTRL  VOP  VON  VDD  GND
++PARAMS: W_XCP=20u W_TAIL=50u
+
+* Tail current source (W/L = 50/0.5)
+M_tail  VTAIL  VBIAS_N  GND  GND  NMOS18  W={W_TAIL}  L=0.5u
+*  VBIAS_N set by external bias circuit to give Itail = 5mA
+
+* Cross-coupled NMOS pair (W/L = 20/0.18, min-L for speed)
+M1  VOP  VON  VTAIL  GND  NMOS18  W={W_XCP}  L=0.18u
+M2  VON  VOP  VTAIL  GND  NMOS18  W={W_XCP}  L=0.18u
+
+* On-chip spiral inductor model (Q=7 at 1GHz)
+*   Series R (Rs = ωL/Q) + shunt parasitic cap (Cox/2)
+L1   VDD  VP1  1n       ; half tank inductor
+RL1  VP1  VOP  0.898    ; Rs = 2π×1G×1n/7 ≈ 0.9Ω
+L2   VDD  VP2  1n
+RL2  VP2  VON  0.898
+Cp1  VDD  GND  200f     ; substrate cap (Cox parasitics)
+Cp2  VDD  GND  200f
+
+* NMOS Varactors for tuning (inversion-mode MOS cap)
+*  Accumulation mode: W=20µm, L=0.5µm → ~12 pF tuning range
+*  For 400 MHz/V, ΔC ≈ Kvco/(2π×f²×L) × Δf/ΔV ≈ 4pF/V
+MVC1  VOP   CTRL  GND  GND  NMOS18  W=20u  L=0.5u
+MVC2  VON   CTRL  GND  GND  NMOS18  W=20u  L=0.5u
+*  Fixed caps for centering (remaining tank cap ~8.7 pF)
+CT1  VOP  GND  8.7p
+CT2  VON  GND  8.7p
+
+.ENDS VCO_LC
+
+* ============================================================
+* SUB 2: PFD — Three-State Phase-Frequency Detector
+*
+*  Classic two-DFF topology with NAND reset + delay
+*  Avoids dead zone via tdelay ≈ 100ps
+*
+*  REF ──D─[DFF1]─Q─UP ──────────────┐
+*          CLK↑          AND(nand)─RST─┤
+*  FB  ──D─[DFF2]─Q─DN ──────────────┘
+*
+* Each DFF: W_D=2µm/0.18, W_CK=4µm/0.18 (TSPC topology)
+* ============================================================
+.SUBCKT PFD_TL  REF  FB  UP  DN  VDD  GND
+
+* -- DFF1 (REF edge → UP) --
+* TSPC (True Single-Phase Clock) DFF using 6 transistors
+* Stage 1 (precharge): MP1a, MN1a
+MP1a  P1  REF   VDD  VDD  PMOS18  W=2u  L=0.18u
+MN1a  P1  REF   N1a  GND  NMOS18  W=2u  L=0.18u
+MN1b  N1a GND_D GND  GND  NMOS18  W=2u  L=0.18u  ; D=VDD always
+* Stage 2 (evaluate):
+MP1b  P2  P1   VDD  VDD  PMOS18  W=2u  L=0.18u
+MN1c  P2  REF  N1c  GND  NMOS18  W=2u  L=0.18u
+MN1d  N1c P1   GND  GND  NMOS18  W=2u  L=0.18u
+* Stage 3 (output):
+MP1c  UP  P2   VDD  VDD  PMOS18  W=4u  L=0.18u
+MN1e  UP  P2   GND  GND  NMOS18  W=2u  L=0.18u
+
+* -- DFF2 (FB edge → DN) -- (mirror of DFF1)
+MP2a  P3  FB   VDD  VDD  PMOS18  W=2u  L=0.18u
+MN2a  P3  FB   N2a  GND  NMOS18  W=2u  L=0.18u
+MN2b  N2a GND  GND  GND  NMOS18  W=2u  L=0.18u
+MP2b  P4  P3   VDD  VDD  PMOS18  W=2u  L=0.18u
+MN2c  P4  FB   N2c  GND  NMOS18  W=2u  L=0.18u
+MN2d  N2c P3   GND  GND  NMOS18  W=2u  L=0.18u
+MP2c  DN  P4   VDD  VDD  PMOS18  W=4u  L=0.18u
+MN2e  DN  P4   GND  GND  NMOS18  W=2u  L=0.18u
+
+* -- NAND Reset with delay --
+* NAND2: RST_PRE = !(UP & DN)
+MP_na  RST_PRE  UP   VDD  VDD  PMOS18  W=4u  L=0.18u
+MP_nb  RST_PRE  DN   VDD  VDD  PMOS18  W=4u  L=0.18u
+MN_na  RST_PRE  UP   RST_MID  GND  NMOS18  W=2u  L=0.18u
+MN_nb  RST_MID  DN   GND  GND  NMOS18  W=2u  L=0.18u
+
+* Delay buffer (2 inverters): adds ~100ps to eliminate dead zone
+* INV1
+MP_d1  RST_D1  RST_PRE  VDD  VDD  PMOS18  W=2u  L=0.18u
+MN_d1  RST_D1  RST_PRE  GND  GND  NMOS18  W=1u  L=0.18u
+* INV2
+MP_d2  RST  RST_D1  VDD  VDD  PMOS18  W=2u  L=0.18u
+MN_d2  RST  RST_D1  GND  GND  NMOS18  W=1u  L=0.18u
+
+* Apply reset to DFF1 and DFF2
+* (In full design, RST is wired to async reset inputs of DFFs)
+* Simplified: RST drives gates of additional pull-down in DFF outputs
+MR1  UP  RST  GND  GND  NMOS18  W=4u  L=0.18u
+MR2  DN  RST  GND  GND  NMOS18  W=4u  L=0.18u
+
+* Tie D inputs HIGH
+VD  GND_D  GND  {VDD}
+
+.ENDS PFD_TL
+
+* ============================================================
+* SUB 3: CHARGE PUMP — Cascode Current Source / Sink
+*
+*     VDD
+*      |
+*  MP1 (W=20u/0.5u, Ibias via PMOS mirror)
+*      |
+*  MP2 (W=20u/0.5u, cascode, VBIAS_P2)      ← UP controls SW_P
+*      |
+*   SW_P (W=10u/0.18u PMOS switch)
+*      |
+*  LF_OUT ─────────────────────────── loop filter
+*      |
+*   SW_N (W=10u/0.18u NMOS switch)
+*      |
+*  MN2 (W=20u/0.5u, cascode, VBIAS_N2)      ← DN controls SW_N
+*      |
+*  MN1 (W=20u/0.5u, Ibias via NMOS mirror)
+*      |
+*     GND
+*
+* ============================================================
+.SUBCKT CP_CASCODE  UP  DN  LF_OUT  VDD  GND
++PARAMS: W_CS=20u W_SW=10u
+
+* PMOS current source + cascode (Icp = 200µA)
+MP1  VP1   VBIAS_P1  VDD  VDD  PMOS18  W={W_CS}  L=0.5u
+MP2  VP2   VBIAS_P2  VP1  VDD  PMOS18  W={W_CS}  L=0.5u
+
+* PMOS switch (opened when UP=0, closed when UP=1)
+* Active-low: UP is high→ close switch (pull VGSP = 0)
+MP_SW  LF_OUT  UP_N  VP2  VDD  PMOS18  W={W_SW}  L=0.18u
+* Invert UP → UP_N for PMOS gate
+MP_inv  UP_N  UP  VDD  VDD  PMOS18  W=2u  L=0.18u
+MN_inv  UP_N  UP  GND  GND  NMOS18  W=1u  L=0.18u
+
+* NMOS current sink + cascode (Icp = 200µA)
+MN1  VN1   VBIAS_N1  GND  GND  NMOS18  W={W_CS}  L=0.5u
+MN2  VN2   VBIAS_N2  VN1  GND  NMOS18  W={W_CS}  L=0.5u
+
+* NMOS switch (closed when DN=1)
+MN_SW  LF_OUT  DN  VN2  GND  NMOS18  W={W_SW}  L=0.18u
+
+* Bias voltages (from external bandgap-based bias generator)
+* VBIAS_P1 ≈ VDD - 0.4V = 1.4V  (sets Icp via mirror)
+* VBIAS_P2 ≈ VDD - 0.6V = 1.2V  (cascode, Vdsat margin)
+* VBIAS_N1 ≈ 0.5V
+* VBIAS_N2 ≈ 0.7V
+
+.ENDS CP_CASCODE
+
+* ============================================================
+* SUB 4: CML DIVIDE-BY-2 (1 GHz input)
+*
+*  Differential CML D-latch master-slave topology
+*  Itail = 1mA per latch (2 latches = 2mA per stage)
+*  W_diff = 8µm/0.18, W_load = 10µm/0.5µm (PMOS loads)
+*
+*         VDD
+*      MP_L MP_R   (PMOS resistive loads or current-source)
+*         |   |
+*     Q_m  Q_mb   (master latch outputs)
+*         |   |
+*    MN1  MN2  (differential pair, D/Db)
+*         |
+*       MN_tail
+*         |
+*        GND
+* ============================================================
+.SUBCKT CML_DIV2  INP  INN  OUTP  OUTN  VDD  GND
++PARAMS: W_D=8u W_L=10u W_T=10u VBIAS_T=0.6
+
+* -- MASTER LATCH --
+* PMOS loads
+MPm1  QMP  VDD  VDD  VDD  PMOS18  W={W_L}  L=0.5u
+MPm2  QMN  VDD  VDD  VDD  PMOS18  W={W_L}  L=0.5u
+*  (Triode-biased loads; simplified as resistors for DC here)
+Rm1  VDD  QMP  400
+Rm2  VDD  QMN  400
+
+* Diff pair (D input)
+MNm1  QMP  INP  VTAIL_M  GND  NMOS18  W={W_D}  L=0.18u
+MNm2  QMN  INN  VTAIL_M  GND  NMOS18  W={W_D}  L=0.18u
+
+* Regenerative pair (latch when CLK=0)
+MNm3  QMP  QMN  VTAIL_M  GND  NMOS18  W={W_D}  L=0.18u
+MNm4  QMN  QMP  VTAIL_M  GND  NMOS18  W={W_D}  L=0.18u
+
+* Master tail current source
+MNmt  VTAIL_M  VBIAS_T  GND  GND  NMOS18  W={W_T}  L=0.5u
+
+* -- SLAVE LATCH (clocked by complement) --
+Rsl1  VDD  QSP  400
+Rsl2  VDD  QSN  400
+
+* Diff pair (D = master Q output)
+MNs1  QSP  QMP  VTAIL_S  GND  NMOS18  W={W_D}  L=0.18u
+MNs2  QSN  QMN  VTAIL_S  GND  NMOS18  W={W_D}  L=0.18u
+
+* Regen pair
+MNs3  QSP  QSN  VTAIL_S  GND  NMOS18  W={W_D}  L=0.18u
+MNs4  QSN  QSP  VTAIL_S  GND  NMOS18  W={W_D}  L=0.18u
+
+* Slave tail
+MNst  VTAIL_S  VBIAS_T  GND  GND  NMOS18  W={W_T}  L=0.5u
+
+* Outputs buffered to CMOS levels via differential-to-single converter
+* (Simplified: use differential pair with large resistive load)
+Bout_p  OUTP  GND  V=IF(V(QSP)>V(QSN), {VDD}, 0)
+Bout_n  OUTN  GND  V=IF(V(QSP)>V(QSN), 0, {VDD})
+
+.ENDS CML_DIV2
+
+* ============================================================
+* SUB 5: TSPC DIVIDE-BY-5 (500 MHz input)
+*
+*  5-stage Johnson / modulo-5 synchronous counter
+*  Uses TSPC DFFs for speed at 500 MHz
+*
+*  State sequence: 000→001→010→011→100→000
+*  Reset to 000 when Q2·Q0 = 1  (state 100→101→reset)
+*
+* ============================================================
+.SUBCKT TSPC_DIV5  CLK  OUT  VDD  GND
+
+* 3-bit synchronous counter, modulo-5
+* Using behavioral ABM for clarity; replace with TSPC DFF instances
+* in full transistor-level implementation
+
+* State register
+Acnt [CLK] [] [] [] [] [GND] [Q2] [Q1] [Q0] []
++    COUNTER(modulus=5 ic=0)
+
+* Output is high for states 3,4 (50% duty not achievable with ÷5)
+* Use Q2 as output (transitions at counts 4→0)
+Bout  OUT  GND  V={V(Q2)}
+
+.ENDS TSPC_DIV5
+
+* ============================================================
+* SUB 6: OUTPUT BUFFER — Differential to Single-Ended
+*
+*  Source-follower CML → 50Ω or on-chip load
+* ============================================================
+.SUBCKT OUT_BUF  INP  INN  OUT  VDD  GND
++PARAMS: W_SF=40u RLOAD=50
+
+* Differential pair
+MNb1  VOUTP  INP  VTAIL_B  GND  NMOS18  W={W_SF}  L=0.18u
+MNb2  VOUTN  INN  VTAIL_B  GND  NMOS18  W={W_SF}  L=0.18u
+
+* Load resistors
+Rb1  VDD  VOUTP  {RLOAD}
+Rb2  VDD  VOUTN  {RLOAD}
+
+* Tail (Ibias ≈ 4mA for 50Ω drive)
+MNbt  VTAIL_B  VBIAS_B  GND  GND  NMOS18  W=40u  L=0.5u
+
+* Single-ended output via source-follower
+MNsf  OUT  VOUTP  VSRC  GND  NMOS18  W=20u  L=0.18u
+Rterm  VSRC  GND  {RLOAD}  ; 50Ω termination
+
+.ENDS OUT_BUF
+
+* ============================================================
+* TOP LEVEL (transistor-level)  — Wire up all blocks
+* ============================================================
+.TITLE  CP_PLL_1GHz_TL
+
+VDD_RAIL  VDD  GND  1.8
+
+* Reference clock (100 MHz crystal oscillator buffer output)
+VREF  REF  GND  PULSE(0 1.8 0 100p 100p 4.9n 10n)
+
+* Bias generator (ideal voltage sources as placeholders)
+VBIAS_N   VBIAS_N    GND  0.5
+VBIAS_N2  VBIAS_N2   GND  0.7
+VBIAS_P1  VBIAS_P1   GND  1.4
+VBIAS_P2  VBIAS_P2   GND  1.2
+VBIAS_B   VBIAS_B    GND  0.6
+VBIAS_T   VBIAS_T    GND  0.6
+
+* PFD
+XPFD  REF  FB_100M  UP  DN  VDD  GND  PFD_TL
+
+* Charge Pump
+XCP  UP  DN  LF_IN  VDD  GND  CP_CASCODE
+
+* Loop Filter (passive — no .SUBCKT needed)
+*   R1 = 3.9kΩ,  C1 = 30pF,  C2 = 2pF
+R1_lf    LF_IN   LF_MID  3.9k
+C1_lf    LF_MID  GND     30p
+C2_lf    LF_IN   GND     2p
+
+* VCO
+XVCO  LF_IN  VCO_P  VCO_N  VDD  GND  VCO_LC
+
+* ÷2 CML (1 GHz → 500 MHz)
+XDIV2  VCO_P  VCO_N  DIV2_P  DIV2_N  VDD  GND  CML_DIV2
+
+* ÷5 TSPC (500 MHz → 100 MHz)
+XDIV5  DIV2_P  FB_100M  VDD  GND  TSPC_DIV5
+
+* Output Buffer
+XBUF  VCO_P  VCO_N  PLL_OUT  VDD  GND  OUT_BUF
+
+* Initial conditions
+.IC  V(LF_IN)=0.9  V(LF_MID)=0.9
+
+* Transient simulation (3µs → observe lock)
+.TRAN  5p  3u  0  5p
+
+* Measure power
+.MEASURE TRAN P_vco   AVG  -I(XVCO:VDD)*V(VDD)  FROM=1u TO=3u
+.MEASURE TRAN P_div   AVG  -(I(XDIV2:VDD)+I(XDIV5:VDD))*V(VDD) FROM=1u TO=3u
+.MEASURE TRAN P_pfd   AVG  -I(XPFD:VDD)*V(VDD)  FROM=1u TO=3u
+.MEASURE TRAN P_cp    AVG  -I(XCP:VDD)*V(VDD)   FROM=1u TO=3u
+.MEASURE TRAN P_buf   AVG  -I(XBUF:VDD)*V(VDD)  FROM=1u TO=3u
+
+.END

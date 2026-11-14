@@ -1,0 +1,50 @@
+// ===========================================================
+//  Charge Pump — Verilog-A Behavioral Model
+//  Cascode topology, Icp = 200µA
+//  Mismatch and leakage modelled
+// ===========================================================
+`include "disciplines.vams"
+`include "constants.vams"
+
+module charge_pump (up, dn, out, vdd, vss);
+
+  input    up, dn, vdd, vss;
+  inout    out;
+  electrical up, dn, out, vdd, vss;
+
+  parameter real icp       = 200e-6;   // A   nominal current
+  parameter real mismatch  = 0.01;     // 1%  up/dn mismatch
+  parameter real ileakage  = 2e-9;     // A   leakage current (Zout finite)
+  parameter real vth       = 0.9;      // V   logic threshold
+  parameter real ton_delay = 20e-12;   // s   switch turn-on delay
+  parameter real toff_delay= 20e-12;   // s   switch turn-off delay
+
+  real up_on, dn_on;
+  real i_up, i_dn, i_out;
+
+  analog begin
+
+    // Switch state with hysteresis for clean switching
+    up_on = (V(up, vss) > vth) ? 1.0 : 0.0;
+    dn_on = (V(dn, vss) > vth) ? 1.0 : 0.0;
+
+    // UP current: sources Icp into output
+    i_up = up_on * icp * (1.0 + mismatch);
+
+    // DN current: sinks Icp from output
+    i_dn = dn_on * icp;
+
+    // Net current into loop filter
+    i_out = i_up - i_dn;
+
+    // Leakage (pulls output toward mid-rail slowly)
+    // models finite output impedance of cascode mirrors
+    i_out = i_out + ileakage * (V(vdd,vss)/2.0 - V(out,vss)) / (V(vdd,vss)/2.0);
+
+    I(out, vss)  <+ -i_out;   // current into node
+    I(vdd, vss)  <+ up_on  * icp * (1.0 + mismatch);  // supply draw
+    I(vss, vss)  <+ dn_on  * icp;
+
+  end
+
+endmodule

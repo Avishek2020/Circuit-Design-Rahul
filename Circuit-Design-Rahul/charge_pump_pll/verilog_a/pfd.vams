@@ -1,0 +1,72 @@
+// ===========================================================
+//  PFD — Verilog-A Behavioral Model
+//  Tri-state Phase Frequency Detector
+//  Two D-FFs with NAND reset, dead-zone-free (Treset = 100ps)
+// ===========================================================
+`include "disciplines.vams"
+`include "constants.vams"
+
+module pfd (ref, fb, up, dn, vdd, vss);
+
+  input    ref, fb, vdd, vss;
+  output   up, dn;
+  electrical ref, fb, up, dn, vdd, vss;
+
+  parameter real vdd_val    = 1.8;    // V
+  parameter real vth        = 0.9;    // V  logic threshold
+  parameter real tpd        = 50e-12; // s  propagation delay per DFF
+  parameter real treset     = 100e-12;// s  reset delay (dead-zone elimination)
+  parameter real trise      = 20e-12; // s  output edge time
+
+  // State variables for latches
+  real up_q,   dn_q;    // latch outputs
+  real ref_prev, fb_prev;
+
+  // Edge detect
+  real t_up_set, t_dn_set;
+  real t_reset;
+
+  // Output voltages (filtered for smooth transitions)
+  real vup_tgt, vdn_tgt;
+
+  analog begin
+
+    @(initial_step) begin
+      up_q     = 0.0;
+      dn_q     = 0.0;
+      ref_prev = 0.0;
+      fb_prev  = 0.0;
+      vup_tgt  = 0.0;
+      vdn_tgt  = 0.0;
+    end
+
+    // Detect rising edges on REF and FB
+    @(cross(V(ref, vss) - vth, +1)) begin
+      up_q    = 1.0;
+      vup_tgt = vdd_val;
+    end
+
+    @(cross(V(fb, vss) - vth, +1)) begin
+      dn_q    = 1.0;
+      vdn_tgt = vdd_val;
+    end
+
+    // Reset both when UP=1 AND DN=1 (after Treset delay)
+    @(cross(up_q * dn_q - 0.5, +1)) begin
+      #(treset);
+      up_q    = 0.0;
+      dn_q    = 0.0;
+      vup_tgt = 0.0;
+      vdn_tgt = 0.0;
+    end
+
+    // Drive outputs with slew-rate limiting (trise)
+    V(up, vss) <+ transition(vup_tgt, tpd, trise);
+    V(dn, vss) <+ transition(vdn_tgt, tpd, trise);
+
+    // Negligible supply current
+    I(vdd, vss) <+ 0.4e-3;  // ~0.4 mA average
+
+  end
+
+endmodule

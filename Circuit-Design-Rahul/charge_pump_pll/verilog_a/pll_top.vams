@@ -1,0 +1,55 @@
+// ===========================================================
+//  CP-PLL TOP — Verilog-A Testbench Wrapper
+//  f_ref = 100 MHz  →  f_out = 1 GHz,  N = 10
+//  Passive Loop Filter: R1=3.9kΩ, C1=30pF, C2=2pF
+// ===========================================================
+`include "disciplines.vams"
+`include "constants.vams"
+
+module pll_top (ref_in, pll_out, vdd, vss);
+
+  input  ref_in, vdd, vss;
+  output pll_out;
+  electrical ref_in, pll_out, vdd, vss;
+
+  // Internal nodes
+  electrical up_sig, dn_sig;
+  electrical lf_in, lf_mid;    // loop filter nodes
+  electrical vco_p, vco_n;     // VCO differential output
+  electrical fb_100m;          // feedback (÷10 output = 100 MHz)
+
+  // ── Loop Filter (passive 3rd-order) ────────────────────
+  // Computed by design_calc.py:
+  //   R1 = 3927 Ω  → use 3.9 kΩ (1% tolerance)
+  //   C1 = 29.7 pF → use 30 pF
+  //   C2 =  2.1 pF → use 2.0 pF
+  //   fz  = 1.33 MHz,  fp2 = 20.4 MHz,  fc = 5.1 MHz,  PM = 61°
+  parameter real R1 = 3900.0;    // Ω
+  parameter real C1 = 30.0e-12;  // F
+  parameter real C2 = 2.0e-12;   // F
+
+  analog begin
+    // Loop filter: R1 in series with C1, C2 shunt
+    //   I through R1:  (V(lf_in) - V(lf_mid)) / R1
+    //   C1 charges from lf_mid
+    //   C2 is at lf_in (high-freq pole)
+    I(lf_in,  lf_mid) <+ (V(lf_in, lf_mid)) / R1;
+    I(lf_mid, vss)    <+ C1 * ddt(V(lf_mid, vss));
+    I(lf_in,  vss)    <+ C2 * ddt(V(lf_in,  vss));
+
+    // Output (single-ended from VCO positive rail)
+    V(pll_out, vss) <+ V(vco_p, vss);
+
+    I(vdd, vss)     <+ 0.0;   // supply current tallied in sub-modules
+  end
+
+  // ── Block Instances ────────────────────────────────────
+  xpfd : pfd        (ref_in, fb_100m, up_sig, dn_sig, vdd, vss);
+
+  xcp  : charge_pump(up_sig, dn_sig,  lf_in,  vdd,   vss);
+
+  xvco : vco        (lf_in,  vco_p,  vco_n,  vdd,   vss);
+
+  xdiv : div10      (vco_p,  vco_n,  fb_100m, vdd,  vss);
+
+endmodule

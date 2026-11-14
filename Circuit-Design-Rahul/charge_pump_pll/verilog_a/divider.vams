@@ -1,0 +1,112 @@
+// ===========================================================
+//  Frequency Divider (÷10) — Verilog-A Behavioral Model
+//  Stage 1: ÷2 CML  (1 GHz → 500 MHz)
+//  Stage 2: ÷5 TSPC (500 MHz → 100 MHz)
+// ===========================================================
+`include "disciplines.vams"
+`include "constants.vams"
+
+// ── ÷2 Stage ───────────────────────────────────────────────
+module div2_cml (inp, inn, outp, outn, vdd, vss);
+
+  input    inp, inn, vdd, vss;
+  output   outp, outn;
+  electrical inp, inn, outp, outn, vdd, vss;
+
+  parameter real vdd_val = 1.8;
+  parameter real vth     = 0.9;
+  parameter real tpd     = 40e-12;    // CML delay ≈ 40ps
+  parameter real trise   = 30e-12;
+
+  integer state;
+  real vout_p, vout_n;
+
+  analog begin
+
+    @(initial_step) begin
+      state  = 0;
+      vout_p = 0.0;
+      vout_n = vdd_val;
+    end
+
+    // Toggle on each rising edge of differential input
+    @(cross(V(inp, inn), +1)) begin
+      state  = 1 - state;
+      vout_p = state  ? vdd_val : 0.0;
+      vout_n = state  ? 0.0     : vdd_val;
+    end
+
+    V(outp, vss) <+ transition(vout_p, tpd, trise);
+    V(outn, vss) <+ transition(vout_n, tpd, trise);
+
+    // CML power: Ibias × VDD ≈ 2mA × 1.8V = 3.6 mW
+    I(vdd, vss) <+ 2.0e-3;
+
+  end
+
+endmodule
+
+// ── ÷5 Stage ───────────────────────────────────────────────
+module div5_tspc (clk, out, vdd, vss);
+
+  input    clk, vdd, vss;
+  output   out;
+  electrical clk, out, vdd, vss;
+
+  parameter real vdd_val  = 1.8;
+  parameter real vth      = 0.9;
+  parameter real tpd      = 100e-12;  // TSPC ≈ 100ps at 500 MHz
+  parameter real trise    = 50e-12;
+  parameter integer modulus = 5;      // divide ratio
+
+  integer count;
+  real vout;
+
+  analog begin
+
+    @(initial_step) begin
+      count = 0;
+      vout  = 0.0;
+    end
+
+    @(cross(V(clk, vss) - vth, +1)) begin
+      count = count + 1;
+      if (count >= modulus)
+        count = 0;
+      // Output HIGH for counts 0 and 1 (40% duty), LOW for 2,3,4
+      vout = (count < 2) ? vdd_val : 0.0;
+    end
+
+    V(out, vss) <+ transition(vout, tpd, trise);
+
+    // TSPC power: ~1.5 mW
+    I(vdd, vss) <+ 0.83e-3;
+
+  end
+
+endmodule
+
+// ── Top-Level ÷10 (wire ÷2 → ÷5) ──────────────────────────
+module div10 (inp, inn, out, vdd, vss);
+
+  input    inp, inn, vdd, vss;
+  output   out;
+  electrical inp, inn, out, vdd, vss;
+  electrical div2_outp, div2_outn, div5_in;
+
+  parameter real vdd_val = 1.8;
+
+  // Wire: div2 output → div5 input (single-ended from diff)
+  analog begin
+    // Mid-point of diff output used as single-ended clock for ÷5
+    V(div5_in, vss) <+ V(div2_outp, vss);
+    I(vdd, vss)     <+ 0.0;
+  end
+
+  xdiv2 : div2_cml  #(.vdd_val(vdd_val))
+           (inp, inn, div2_outp, div2_outn, vdd, vss);
+
+  xdiv5 : div5_tspc #(.vdd_val(vdd_val))
+           (div5_in, out, vdd, vss);
+
+endmodule

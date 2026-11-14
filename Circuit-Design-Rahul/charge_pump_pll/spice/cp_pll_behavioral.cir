@@ -1,0 +1,211 @@
+* ============================================================
+*  CHARGE PUMP PLL — BEHAVIORAL SPICE NETLIST
+*  f_ref = 100 MHz  |  f_out = 1 GHz  |  N = 10
+*  Technology: TSMC 180nm CMOS, VDD = 1.8V
+*  Simulator: LTspice / ngspice compatible
+* ============================================================
+
+.TITLE  CP_PLL_1GHz
+
+* ─── Global Supply ──────────────────────────────────────
+.PARAM VDD=1.8
+
+* ─── Top-Level Connections ─────────────────────────────
+*   REF_CLK → PFD → Charge Pump → Loop Filter → VCO
+*                                                   ↓
+*                              Feedback ← Divider (/N)
+
+* ============================================================
+* BLOCK 1: REFERENCE CLOCK (100 MHz)
+* ============================================================
+* Square wave, 50% duty, 1.8V swing
+VREF  REF GND  PULSE(0 {VDD} 0 100p 100p 4.9n 10n)
+*                            ^tr  ^tf  ^pw  ^period
+
+* ============================================================
+* BLOCK 2: PHASE FREQUENCY DETECTOR (PFD)
+* Behavioral model: tri-state output UP/DN
+* Uses two D-FFs with asynchronous reset
+* Dead-zone eliminated by 100ps delay in reset path
+* ============================================================
+* PFD sub-circuit: inputs REF and FB, outputs UP and DN
+.SUBCKT PFD  REF  FB  UP  DN  VDD GND
++PARAMS: TDELAY=100p VDD=1.8
+
+* D Flip-Flop for UP path (D always HIGH)
+* Rising edge of REF sets UP=1; reset fires when both UP=DN=1
+Aup   [REF] [VDD] [RST_UP] [VDD] [VDD] [GND] [UP] [GND]
++      DFF(rise_delay={TDELAY} fall_delay={TDELAY} ic=0)
+
+* D Flip-Flop for DN path
+Adn   [FB]  [VDD] [RST_DN] [VDD] [VDD] [GND] [DN] [GND]
++      DFF(rise_delay={TDELAY} fall_delay={TDELAY} ic=0)
+
+* Reset NAND with delay: RST = UP & DN (delayed)
+Bnand_rst RST GND V=IF(V(UP)>0.9 & V(DN)>0.9, 0, {VDD})
+Rdelay RST RST_UP 500
+Cdelay RST_UP GND 200f   ; RC delay ≈ 100ps to prevent dead-zone
+Edel2  RST_DN GND VALUE={V(RST_UP)}
+
+.ENDS PFD
+
+* ─── Instantiate PFD ─────────────────────────────────────
+* (Using behavioral voltage sources as simplified PFD for ngspice)
+
+* Simplified behavioral PFD using ABM sources
+* UP = 1 when REF leads FB; DN = 1 when FB leads REF
+
+* Phase error storage using S/R latch approach
+Bup_set  SET_UP  GND  V=IF(V(REF)>0.9 & V(last_ref)<0.9, {VDD}, 0)
+Bdn_set  SET_DN  GND  V=IF(V(FB_div)>0.9 & V(last_fb)<0.9, {VDD}, 0)
+
+* Latch delay network (edge detection)
+Rlr  REF      last_ref  10k
+Clr  last_ref GND       1p  ; creates ~10ps "last" signal
+Rlfb FB_div   last_fb   10k
+Clfb last_fb  GND       1p
+
+* UP/DN signals (held until reset)
+S_up_on   UP_node GND  SET_UP  GND  SW_ON
+S_up_off  UP_node GND  RESET   GND  SW_ON
+S_dn_on   DN_node GND  SET_DN  GND  SW_ON
+S_dn_off  DN_node GND  RESET   GND  SW_ON
+
+* Reset: both high → reset after Tdelay
+Breset   RESET   GND  V=IF(V(UP_node)>0.9 & V(DN_node)>0.9, {VDD}, 0)
+Rpr  RESET RESET_D 2k
+Cpd  RESET_D GND  100f   ; 200ps reset delay
+
+.MODEL SW_ON VSWITCH(RON=100 ROFF=1Meg VON=0.9 VOFF=0.4)
+
+* Pull-up for UP/DN nodes
+Rup  UP_node VDD  10k
+Rdn  DN_node VDD  10k
+
+* ============================================================
+* BLOCK 3: CHARGE PUMP (cascode current sources)
+* ============================================================
+*
+*  VDD ──┬── PMOS cascode (UP mirror)
+*        ├── Icp_up = 200µA when UP=1
+*       LF_in                            ← Loop filter node
+*        ├── Icp_dn = 200µA when DN=1
+*        └── NMOS cascode (DN mirror)
+*
+.SUBCKT CHARGE_PUMP  UP  DN  OUT  VDD  GND
++PARAMS: ICP=200u
+
+* UP current source (sourcing): active when UP=1
+Gup  VDD  OUT  VALUE={IF(V(UP)>0.9, {ICP}, 0)}
+
+* DN current source (sinking): active when DN=1
+Gdn  OUT  GND  VALUE={IF(V(DN)>0.9, {ICP}, 0)}
+
+* Leakage model (mismatch) ≈ 1% of Icp
+Rleak  OUT  GND  {1/( 0.01*ICP/1.8 )}   ; creates ~18pA leakage equiv
+
+.ENDS CHARGE_PUMP
+
+XCP  UP_node  DN_node  LF_IN  VDD  GND  CHARGE_PUMP  ICP=200u
+
+* ============================================================
+* BLOCK 4: PASSIVE LOOP FILTER (3rd-order)
+*
+*  LF_IN ──R1── LF_MID ──R2── VCO_CTRL
+*                 |               |
+*                C1              C2
+*                |               |
+*               GND             GND
+*
+*  R1 = 3927 Ω     (from design calculator)
+*  C1 = 29.7 pF    (integration capacitor + zero)
+*  C2 =  2.1 pF    (high-frequency pole)
+* ============================================================
+* Using rounded values:
+.PARAM R1=3.9k  C1=30p  C2=2.0p
+
+R1   LF_IN   LF_MID  {R1}
+C1   LF_MID  GND     {C1}
+C2   LF_IN   GND     {C2}
+
+* ============================================================
+* BLOCK 5: VCO (NMOS cross-coupled LC oscillator, behavioral)
+*
+*  Differential LC oscillator, 1 GHz
+*  Ktune = 400 MHz/V  around Vctr = 0.9V (mid-rail)
+*
+*  Behavioral: f(V) = f0 + Kvco*(Vctr - V0)
+*  Output: single-ended square wave via comparator
+* ============================================================
+.SUBCKT VCO  CTRL  OUT  VDD  GND
++PARAMS: F0=1e9 KVCO=400e6 VCTR_NOM=0.9 VLIMIT=1.8
+
+* Instantaneous frequency as voltage
+Bfreq  FREQ_V  GND
++  V={ F0 + KVCO*(V(CTRL) - VCTR_NOM) }
+
+* Phase accumulator via integrator:  dφ/dt = 2π·f(V)
+* Implemented as: Vphase = integral(2π*f(V)) via capacitor trick
+*   dVph/dt = 2π·f(V)  →  C·dVph/dt = 2π·f(V)·C
+*   Use C=1F, current source = 2π·f(V)
+Cph   VCO_PHASE  GND  1
+Gph   VDD        VCO_PHASE  VALUE={2*3.14159*V(FREQ_V)}
+
+* Square wave output: compare sin(phase) with zero threshold
+Bout  OUT  GND  V={ IF(SIN(V(VCO_PHASE)) >= 0, {VLIMIT}, 0) }
+
+.ENDS VCO
+
+XVCO  LF_IN  VCO_OUT  VDD  GND  VCO
++     F0=1e9  KVCO=400e6  VCTR_NOM=0.9  VLIMIT={VDD}
+
+* ============================================================
+* BLOCK 6: FREQUENCY DIVIDER (÷10 = ÷2 × ÷5)
+*
+*  Stage 1: CML ÷2 at 1 GHz → 500 MHz
+*  Stage 2: TSPC ÷5 at 500 MHz → 100 MHz
+*
+*  Behavioral: delay-based divide-by-N
+* ============================================================
+.SUBCKT DIV2  CLK_IN  CLK_OUT  VDD  GND
+
+* Toggle FF: output toggles on each rising edge
+* Behavioral: delay = T/2 of output = T of input
+Atog [CLK_IN] [VDD] [] [VDD] [VDD] [GND] [Q_div2] [Q_div2n]
++    DFF(ic=0)
+
+Bclkout  CLK_OUT  GND  V={V(Q_div2)}
+
+.ENDS DIV2
+
+* Simplified behavioral divide-by-10 using BSOURCE
+* Output freq = input freq / 10
+Bdiv  FB_div  GND
++  V={ IF(SIN(V(VCO_PHASE_FB)) >= 0, {VDD}, 0) }
+
+* Track VCO phase / 10 for divide-by-10
+Cph10  VCO_PHASE_FB  GND  1
+Gph10  VDD  VCO_PHASE_FB  VALUE={ 2*3.14159*V(FREQ_V_FB)/10 }
+Bfreq10  FREQ_V_FB  GND  V={1e9 + 400e6*(V(LF_IN)-0.9)}
+
+* ============================================================
+* SIMULATION SETUP
+* ============================================================
+VDD_SUP  VDD  GND  {VDD}
+
+* Initial condition: pre-charge loop filter to nominal VCO ctrl
+.IC V(LF_IN)=0.9  V(LF_MID)=0.9
+
+* Transient: run for 3µs to observe locking
+.TRAN  10p  3u  0  10p
+
+* Save key waveforms
+.PROBE V(REF) V(FB_div) V(UP_node) V(DN_node) V(LF_IN) V(VCO_OUT)
+
+* ============================================================
+* AC ANALYSIS — Open Loop Bode (inject at LF_IN)
+* ============================================================
+* To run AC: break loop at LF_IN, inject Vac, measure at PFD input
+* (see ac_analysis.cir for open-loop Bode setup)
+
+.END
