@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CP-PLL Simulator · TSMC 180nm</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --bg:      #0d1117;
+    --panel:   #161b22;
+    --border:  #30363d;
+    --accent:  #2f81f7;
+    --accent2: #3fb950;
+    --warn:    #d29922;
+    --text:    #e6edf3;
+    --muted:   #8b949e;
+    --red:     #f85149;
+    --purple:  #a371f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+  }
+  header h1 { font-size: 16px; font-weight: 600; }
+  header p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badge {
+    margin-left: auto;
+    background: rgba(47,129,247,.15);
+    color: var(--accent);
+    border: 1px solid rgba(47,129,247,.3);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    height: calc(100vh - 65px);
+  }
+
+  /* ── Sidebar ── */
+  aside {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .param-group { display: flex; flex-direction: column; gap: 12px; }
+  .param {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .param label {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+  .param label span { color: var(--text); font-weight: 500; }
+  .param input[type=range] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .param input[type=number] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 5px 8px;
+    font-size: 13px;
+    outline: none;
+  }
+  .param input[type=number]:focus { border-color: var(--accent); }
+
+  .run-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, opacity .15s;
+  }
+  .run-btn:hover   { background: #1f6feb; }
+  .run-btn:disabled { opacity: .5; cursor: default; }
+
+  .preset-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .preset-btn {
+    flex: 1;
+    padding: 5px 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 11px;
+    cursor: pointer;
+    transition: border-color .15s;
+    white-space: nowrap;
+  }
+  .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .metric-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .metric-card .val {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent2);
+    line-height: 1.1;
+  }
+  .metric-card .unit { font-size: 11px; color: var(--muted); }
+  .metric-card .lbl  { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .loop-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .loop-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+  }
+  .loop-row .k  { color: var(--muted); }
+  .loop-row .v  { font-weight: 600; color: var(--text); }
+  .loop-row .v.good  { color: var(--accent2); }
+  .loop-row .v.warn  { color: var(--warn); }
+  .loop-row .v.bad   { color: var(--red); }
+
+  .spice-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    line-height: 1.6;
+  }
+  .spice-box .dim { color: var(--muted); }
+
+  /* ── Main chart area ── */
+  main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .chart-toolbar {
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel);
+    flex-shrink: 0;
+  }
+  .chart-toolbar span { font-size: 12px; color: var(--muted); }
+  .tab-btn {
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .tab-btn.active, .tab-btn:hover {
+    background: rgba(47,129,247,.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  #charts {
+    flex: 1;
+    overflow: hidden;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    flex: 1;
+  }
+  .chart-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #chart-single {
+    display: none;
+    flex: 1;
+  }
+  #chart-single.active { display: flex; }
+
+  .status-bar {
+    padding: 6px 20px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+  .status-dot.running { background: var(--warn); animation: pulse 1s infinite; }
+  .status-dot.ok      { background: var(--accent2); }
+  .status-dot.error   { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  #spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #spinner.active { display: inline-block; }
+
+  /* Plotly override */
+  .js-plotly-plot .plotly .modebar { background: transparent !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PLL</div>
+  <div>
+    <h1>Charge Pump PLL Simulator</h1>
+    <p>Phase-domain behavioral model · TSMC 180nm CMOS · f_ref = 100 MHz → f_out = 1 GHz</p>
+  </div>
+  <span class="badge">N = 10 · Icp = 200 µA</span>
+</header>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside>
+    <div>
+      <div class="section-label">Presets</div>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="loadPreset('nominal')">Nominal</button>
+        <button class="preset-btn" onclick="loadPreset('fast')">Fast lock</button>
+        <button class="preset-btn" onclick="loadPreset('slow')">Slow lock</button>
+        <button class="preset-btn" onclick="loadPreset('osc')">Oscillating</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Parameters</div>
+      <div class="param-group">
+
+        <div class="param">
+          <label>Icp — Charge Pump Current <span id="lbl-icp">200 µA</span></label>
+          <input type="range" id="icp" min="50" max="500" step="10" value="200"
+                 oninput="document.getElementById('lbl-icp').textContent=this.value+' µA'">
+        </div>
+
+        <div class="param">
+          <label>Kvco — VCO Gain <span id="lbl-kvco">400 MHz/V</span></label>
+          <input type="range" id="kvco" min="100" max="800" step="20" value="400"
+                 oninput="document.getElementById('lbl-kvco').textContent=this.value+' MHz/V'">
+        </div>
+
+        <div class="param">
+          <label>R1 — Loop Filter Resistor <span id="lbl-r1">3927 Ω</span></label>
+          <input type="range" id="r1" min="500" max="15000" step="100" value="3927"
+                 oninput="document.getElementById('lbl-r1').textContent=Number(this.value).toLocaleString()+' Ω'">
+        </div>
+
+        <div class="param">
+          <label>C1 — Main Cap <span id="lbl-c1">30 pF</span></label>
+          <input type="range" id="c1" min="5" max="100" step="1" value="30"
+                 oninput="document.getElementById('lbl-c1').textContent=this.value+' pF'">
+        </div>
+
+        <div class="param">
+          <label>C2 — Pole Cap <span id="lbl-c2">2.2 pF</span></label>
+          <input type="range" id="c2" min="0.5" max="20" step="0.1" value="2.2"
+                 oninput="document.getElementById('lbl-c2').textContent=this.value+' pF'">
+        </div>
+
+        <div class="param">
+          <label>V_ctrl(0) — Initial Voltage <span id="lbl-vi">0.5 V</span></label>
+          <input type="range" id="vinit" min="0.1" max="1.7" step="0.05" value="0.5"
+                 oninput="document.getElementById('lbl-vi').textContent=parseFloat(this.value).toFixed(2)+' V'">
+        </div>
+
+        <div class="param">
+          <label>Sim Duration <span id="lbl-tend">3.0 µs</span></label>
+          <input type="range" id="tend" min="0.5" max="15" step="0.5" value="3"
+                 oninput="document.getElementById('lbl-tend').textContent=parseFloat(this.value).toFixed(1)+' µs'">
+        </div>
+      </div>
+    </div>
+
+    <button class="run-btn" id="runBtn" onclick="runSim()">▶  Run Simulation</button>
+
+    <div>
+      <div class="section-label">Results</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="val" id="m-tlock">—</div>
+          <div class="unit">µs</div>
+          <div class="lbl">Lock Time (±0.1%)</div>
+        </div>
+        <div class="metric-card">
+          <div class="val" id="m-vss">—</div>
+          <div class="unit">V</div>
+          <div class="lbl">SS V(CTRL)</div>
+        </div>
+        <div class="metric-card">
+          <div class="val" id="m-fss">—</div>
+          <div class="unit">GHz</div>
+          <div class="lbl">SS f_VCO</div>
+        </div>
+        <div class="metric-card">
+          <div class="val" id="m-ppm">—</div>
+          <div class="unit">ppm</div>
+          <div class="lbl">Freq Error</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Loop Analysis</div>
+      <div class="loop-stats">
+        <div class="loop-row"><span class="k">Phase Margin</span>  <span class="v" id="l-pm">—</span></div>
+        <div class="loop-row"><span class="k">Crossover</span>     <span class="v" id="l-fc">—</span></div>
+        <div class="loop-row"><span class="k">Zero f_z</span>      <span class="v" id="l-fz">—</span></div>
+        <div class="loop-row"><span class="k">Pole f_p2</span>     <span class="v" id="l-fp2">—</span></div>
+        <div class="loop-row"><span class="k">Total Power</span>   <span class="v" id="l-pwr">—</span></div>
+      </div>
+    </div>
+
+    <div id="spice-section" style="display:none">
+      <div class="section-label">LTspice 26 Reference</div>
+      <div class="spice-box" id="spice-box"></div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main>
+    <div class="chart-toolbar">
+      <span>View:</span>
+      <button class="tab-btn active" id="tab-grid" onclick="setView('grid')">4-Panel Grid</button>
+      <button class="tab-btn" id="tab-ctrl" onclick="setView('ctrl')">V(CTRL)</button>
+      <button class="tab-btn" id="tab-freq" onclick="setView('freq')">Frequency</button>
+      <button class="tab-btn" id="tab-phase" onclick="setView('phase')">Phase</button>
+      <button class="tab-btn" id="tab-cp" onclick="setView('cp')">Charge Pump</button>
+    </div>
+
+    <div id="charts">
+      <div class="chart-row" id="view-grid">
+        <div class="chart-panel" id="p-ctrl"  style="min-height:0"></div>
+        <div class="chart-panel" id="p-freq"  style="min-height:0"></div>
+        <div class="chart-panel" id="p-phase" style="min-height:0"></div>
+        <div class="chart-panel" id="p-cp"    style="min-height:0"></div>
+      </div>
+      <div class="chart-panel" id="chart-single" style="min-height:0"></div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot" id="sdot"></div>
+      <span id="status-msg">Ready — click Run Simulation to begin</span>
+      <div id="spinner"></div>
+      <span style="margin-left:auto;font-size:10px;color:var(--muted)">
+        scipy ODE (RK45) · Phase-domain behavioral model
+      </span>
+    </div>
+  </main>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────
+let lastData = null;
+let currentView = 'grid';
+
+const PLOTLY_LAYOUT_BASE = {
+  paper_bgcolor: 'transparent',
+  plot_bgcolor:  '#0d1117',
+  font:          { color: '#e6edf3', size: 11 },
+  margin:        { l: 52, r: 12, t: 32, b: 40 },
+  xaxis: {
+    color: '#8b949e', gridcolor: '#21262d', zerolinecolor: '#30363d',
+    title: { font: { size: 11 } },
+  },
+  yaxis: {
+    color: '#8b949e', gridcolor: '#21262d', zerolinecolor: '#30363d',
+    title: { font: { size: 11 } },
+  },
+  legend: { bgcolor: 'rgba(13,17,23,.7)', bordercolor: '#30363d', borderwidth: 1, font: { size: 10 } },
+  hoverlabel: { bgcolor: '#161b22', bordercolor: '#30363d', font: { color: '#e6edf3' } },
+};
+
+const CFG = { responsive: true, displaylogo: false,
+  modeBarButtonsToRemove: ['select2d','lasso2d','toggleSpikelines'] };
+
+// ── Presets ───────────────────────────────────────────────
+const PRESETS = {
+  nominal:    { icp:200, kvco:400, r1:3927,  c1:30,  c2:2.2, vinit:0.5, tend:3  },
+  fast:       { icp:400, kvco:400, r1:1800,  c1:40,  c2:3.0, vinit:0.5, tend:1  },
+  slow:       { icp: 50, kvco:200, r1:8000,  c1:50,  c2:4.0, vinit:0.5, tend:10 },
+  osc:        { icp:400, kvco:800, r1:5000,  c1:10,  c2:1.0, vinit:0.5, tend:5  },
+};
+
+function loadPreset(name) {
+  const p = PRESETS[name];
+  setSlider('icp',  p.icp,   e => e + ' µA');
+  setSlider('kvco', p.kvco,  e => e + ' MHz/V');
+  setSlider('r1',   p.r1,    e => Number(e).toLocaleString() + ' Ω');
+  setSlider('c1',   p.c1,    e => e + ' pF');
+  setSlider('c2',   p.c2,    e => parseFloat(e).toFixed(1) + ' pF');
+  setSlider('vinit',p.vinit, e => parseFloat(e).toFixed(2) + ' V');
+  setSlider('tend', p.tend,  e => parseFloat(e).toFixed(1) + ' µs');
+}
+
+function setSlider(id, val, fmt) {
+  const el = document.getElementById(id);
+  el.value = val;
+  document.getElementById('lbl-' + id).textContent = fmt(val);
+}
+
+// ── Run simulation ─────────────────────────────────────────
+async function runSim() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  setStatus('running', 'Running simulation…');
+
+  const params = {
+    icp:         parseFloat(document.getElementById('icp').value)   * 1e-6,
+    kvco:        parseFloat(document.getElementById('kvco').value)  * 1e6,
+    r1:          parseFloat(document.getElementById('r1').value),
+    c1:          parseFloat(document.getElementById('c1').value)    * 1e-12,
+    c2:          parseFloat(document.getElementById('c2').value)    * 1e-12,
+    v_ctrl_init: parseFloat(document.getElementById('vinit').value),
+    t_end_us:    parseFloat(document.getElementById('tend').value),
+  };
+
+  try {
+    const t0  = performance.now();
+    const res = await fetch('/simulate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || res.statusText);
+    }
+    const data = await res.json();
+    const dt   = ((performance.now() - t0) / 1000).toFixed(2);
+
+    lastData = data;
+    updateMetrics(data);
+    renderCharts(data);
+    updateSpiceLog(data.spice_log);
+    setStatus('ok', `Done in ${dt}s · ${data.time_us.length} samples · lock at ${data.metrics.lock_time_us} µs`);
+  } catch (e) {
+    setStatus('error', 'Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Metrics ───────────────────────────────────────────────
+function updateMetrics(d) {
+  const m = d.metrics;
+  const l = d.loop;
+
+  setText('m-tlock', m.lock_time_us.toFixed(3));
+  setText('m-vss',   m.v_ctrl_ss_v.toFixed(4));
+  setText('m-fss',   m.freq_ss_ghz.toFixed(5));
+  setText('m-ppm',   m.freq_error_ppm.toFixed(3));
+
+  const pmEl = document.getElementById('l-pm');
+  pmEl.textContent = l.phase_margin_deg + '°';
+  pmEl.className   = 'v ' + (l.phase_margin_deg > 55 && l.phase_margin_deg < 80 ? 'good' :
+                              l.phase_margin_deg > 40 ? 'warn' : 'bad');
+
+  setText('l-fc',  l.crossover_mhz + ' MHz');
+  setText('l-fz',  l.zero_mhz      + ' MHz');
+  setText('l-fp2', l.pole2_mhz     + ' MHz');
+
+  const pwrEl = document.getElementById('l-pwr');
+  pwrEl.textContent = l.power_mw + ' mW';
+  pwrEl.className   = 'v ' + (l.power_mw < 100 ? 'good' : 'bad');
+}
+
+function setText(id, v) { document.getElementById(id).textContent = v; }
+
+// ── LTspice log ───────────────────────────────────────────
+function updateSpiceLog(log) {
+  const sec = document.getElementById('spice-section');
+  if (!log) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  const box = document.getElementById('spice-box');
+  const tns = (log.t_lock * 1e9).toFixed(1);
+  const ppm = ((log.fvco_ss - 1) * 1e6).toFixed(3);
+  box.innerHTML =
+    `<span class="dim">t_lock  </span>${tns} ns\n` +
+    `<span class="dim">V(CTRL) </span>${log.vctrl_ss.toFixed(6)} V\n` +
+    `<span class="dim">f_vco   </span>${log.fvco_ss.toFixed(6)} GHz\n` +
+    `<span class="dim">err     </span>${ppm} ppm`;
+}
+
+// ── Charts ────────────────────────────────────────────────
+function mkLayout(title, xLabel, yLabel, extra) {
+  return Object.assign({}, PLOTLY_LAYOUT_BASE, {
+    title: { text: title, font: { size: 12 }, x: 0.04 },
+    xaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.xaxis, { title: { text: xLabel } }),
+    yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { title: { text: yLabel } }),
+  }, extra || {});
+}
+
+function ctrlTraces(d) {
+  const tLock = d.metrics.lock_time_us;
+  return [
+    { x: d.time_us, y: d.v_ctrl, name: 'V(CTRL)', line: { color: '#2f81f7', width: 1.5 }, type: 'scatter' },
+    { x: d.time_us, y: d.v_n1,   name: 'V(N1)',   line: { color: '#a371f7', width: 1, dash: 'dot' }, type: 'scatter' },
+    { x: [0, d.time_us.at(-1)], y: [0.9, 0.9], name: '0.9V lock', line: { color: '#8b949e', width: 1, dash: 'dash' }, type: 'scatter' },
+    { x: [tLock, tLock], y: [0, 2], name: 'Lock', line: { color: '#d29922', width: 1, dash: 'dot' }, type: 'scatter' },
+  ];
+}
+function freqTraces(d) {
+  const tLock = d.metrics.lock_time_us;
+  return [
+    { x: d.time_us, y: d.f_vco_mhz, name: 'f_VCO', line: { color: '#d29922', width: 1.5 }, type: 'scatter' },
+    { x: [0, d.time_us.at(-1)], y: [1000, 1000], name: '1000 MHz', line: { color: '#8b949e', width: 1, dash: 'dash' }, type: 'scatter' },
+    { x: [0, d.time_us.at(-1)], y: [1001, 1001], name: '+0.1%', line: { color: '#3fb950', width: 1, dash: 'dot' }, type: 'scatter' },
+    { x: [0, d.time_us.at(-1)], y: [999,  999 ], name: '-0.1%', line: { color: '#3fb950', width: 1, dash: 'dot' }, type: 'scatter' },
+    { x: [tLock, tLock], y: [700, 1200], name: 'Lock', line: { color: '#d29922', width: 1, dash: 'dot' }, type: 'scatter' },
+  ];
+}
+function phaseTraces(d) {
+  return [
+    { x: d.time_us, y: d.phase_cycles, name: 'φ_err', line: { color: '#a371f7', width: 1.5 }, type: 'scatter' },
+    { x: [0, d.time_us.at(-1)], y: [0, 0], name: '0', line: { color: '#8b949e', width: 1, dash: 'dash' }, type: 'scatter' },
+  ];
+}
+function cpTraces(d) {
+  const icp_ua = parseFloat(document.getElementById('icp').value);
+  return [
+    { x: d.time_us, y: d.i_cp_ua, name: 'I_CP', line: { color: '#f85149', width: 1.5 }, type: 'scatter' },
+    { x: [0, d.time_us.at(-1)], y: [ icp_ua,  icp_ua], name: '+Icp', line: { color: '#8b949e', width: 1, dash: 'dot' }, type: 'scatter' },
+    { x: [0, d.time_us.at(-1)], y: [-icp_ua, -icp_ua], name: '−Icp', line: { color: '#8b949e', width: 1, dash: 'dot' }, type: 'scatter' },
+  ];
+}
+
+function renderCharts(d) {
+  const tEnd = d.time_us.at(-1);
+
+  const layoutCtrl  = mkLayout('VCO Control Voltage', 'Time [µs]', 'V(CTRL)  [V]',
+    { yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [0.1, 1.9], title: { text: 'V(CTRL)  [V]' } }) });
+  const layoutFreq  = mkLayout('VCO Output Frequency', 'Time [µs]', 'f_VCO  [MHz]',
+    { yaxis: Object.assign({}, PLOTLY_LAYOUT_BASE.yaxis, { range: [700, 1150], title: { text: 'f_VCO  [MHz]' } }) });
+  const layoutPhase = mkLayout('Phase Error', 'Time [µs]', 'φ_err  [cycles]');
+  const layoutCP    = mkLayout('Charge Pump Current', 'Time [µs]', 'I_CP  [µA]');
+
+  if (currentView === 'grid') {
+    Plotly.react('p-ctrl',  ctrlTraces(d),  layoutCtrl,  CFG);
+    Plotly.react('p-freq',  freqTraces(d),  layoutFreq,  CFG);
+    Plotly.react('p-phase', phaseTraces(d), layoutPhase, CFG);
+    Plotly.react('p-cp',    cpTraces(d),    layoutCP,    CFG);
+  } else {
+    renderSingle(d);
+  }
+}
+
+function renderSingle(d) {
+  if (!d) return;
+  const map = {
+    ctrl:  [ctrlTraces(d),  mkLayout('VCO Control Voltage',  'Time [µs]', 'V(CTRL)  [V]')],
+    freq:  [freqTraces(d),  mkLayout('VCO Output Frequency', 'Time [µs]', 'f_VCO  [MHz]')],
+    phase: [phaseTraces(d), mkLayout('Phase Error',          'Time [µs]', 'φ_err  [cycles]')],
+    cp:    [cpTraces(d),    mkLayout('Charge Pump Current',  'Time [µs]', 'I_CP  [µA]')],
+  };
+  if (currentView in map) {
+    Plotly.react('chart-single', map[currentView][0], map[currentView][1], CFG);
+  }
+}
+
+// ── View switching ─────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + v).classList.add('active');
+
+  const grid   = document.getElementById('view-grid');
+  const single = document.getElementById('chart-single');
+  if (v === 'grid') {
+    grid.style.display   = 'grid';
+    single.style.display = 'none';
+    if (lastData) renderCharts(lastData);
+  } else {
+    grid.style.display   = 'none';
+    single.style.display = 'flex';
+    renderSingle(lastData);
+  }
+}
+
+// ── Status ─────────────────────────────────────────────────
+function setStatus(state, msg) {
+  document.getElementById('status-msg').textContent = msg;
+  const dot = document.getElementById('sdot');
+  const sp  = document.getElementById('spinner');
+  dot.className  = 'status-dot ' + state;
+  sp.className   = state === 'running' ? 'active' : '';
+}
+
+// ── Auto-run on load ───────────────────────────────────────
+window.addEventListener('load', () => runSim());
+</script>
+</body>
+</html>
